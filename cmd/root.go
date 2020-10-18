@@ -13,6 +13,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(ratioCmd)
+	rootCmd.AddCommand(matchCmd)
 }
 
 func Execute() {

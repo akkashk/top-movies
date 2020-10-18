@@ -16,7 +16,7 @@ var (
 	ratioCmd = &cobra.Command{
 		Use:     "ratio <dataset.csv> [output path]",
 		Example: "ratio ~/Downloads/movies.csv",
-		Short:   "Calculate the budget to revenue ratio of movies",
+		Short:   "Calculate the ratio of budget to revenue for movies in the IMDB dataset",
 		RunE:    ratio,
 		Args:    cobra.MinimumNArgs(1),
 	}
