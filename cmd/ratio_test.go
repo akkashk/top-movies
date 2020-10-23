@@ -43,14 +43,6 @@ import (
 // 	}
 // }
 
-func Test_processHeader(t *testing.T) {
-
-}
-
-func Test_processRows(t *testing.T) {
-
-}
-
 func Test_outputStats(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -67,9 +59,8 @@ Run tool with -v flag to get verbose error outputs.
 		{
 			name: "no errors with counts",
 			in: &outputStats{
-				outputPath: "~/custom/analyse.csv",
-				totalRows:  30,
-				parsedRows: 30,
+				inputFile: "~/custom/analyse.csv",
+				totalRows: 30,
 			},
 			out: `A total of 30 out of 30 rows analysed and saved in ~/custom/analyse.csv. 0 parse errors and 0 revenue/budget errors.
 Run tool with -v flag to get verbose error outputs.
@@ -78,11 +69,8 @@ Run tool with -v flag to get verbose error outputs.
 		{
 			name: "errors",
 			in: &outputStats{
-				outputPath:          "output",
-				totalRows:           32,
-				parsedRows:          30,
-				parseErrors:         []error{fmt.Errorf("parse error")},
-				budgetRevenueErrors: []error{fmt.Errorf("b/r error")},
+				inputFile: "output",
+				totalRows: 32,
 			},
 			out: `A total of 30 out of 32 rows analysed and saved in output. 1 parse errors and 1 revenue/budget errors.
 Run tool with -v flag to get verbose error outputs.
@@ -91,11 +79,8 @@ Run tool with -v flag to get verbose error outputs.
 		{
 			name: "errors with verbose flag",
 			in: &outputStats{
-				outputPath:          "output",
-				totalRows:           32,
-				parsedRows:          30,
-				parseErrors:         []error{fmt.Errorf("parse error")},
-				budgetRevenueErrors: []error{fmt.Errorf("b/r error")},
+				inputFile: "output",
+				totalRows: 32,
 			},
 			verboseFlag: true,
 			out: `A total of 30 out of 32 rows analysed and saved in output. 1 parse errors and 1 revenue/budget errors.
