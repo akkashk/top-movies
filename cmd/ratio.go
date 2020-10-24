@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -64,27 +63,20 @@ func ratio(cmd *cobra.Command, args []string) error {
 	// Write column names of output file
 	fout.Write([]string{"id", "ratio"})
 
+	var numSkipped int
 	for id, metadata := range moviesMetadata {
-		budget, err := strconv.Atoi(metadata.budget)
-		if err != nil {
+		if metadata.revenue <= 0 || metadata.budget <= 0 {
+			numSkipped++
 			continue
 		}
 
-		revenue, err := strconv.Atoi(metadata.revenue)
-		if err != nil {
-			continue
-		}
-
-		if budget <= 0 || revenue <= 0 {
-			continue
-		}
-
-		ratio := float64(revenue) / float64(budget)
+		ratio := float64(metadata.revenue) / float64(metadata.budget)
 		fout.Write([]string{id, fmt.Sprintf("%f", ratio)})
 	}
 
 	fout.Flush()
 
+	fmt.Printf("%d rows had 0 revenue/budget\n", numSkipped)
 	fmt.Print(moviesMetadataStats)
 
 	return fout.Error()

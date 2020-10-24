@@ -6,7 +6,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"time"
+	"sort"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -64,6 +64,13 @@ func load(cmd *cobra.Command, args []string) error {
 
 	fmt.Print(stats)
 
+	combinedData := make([]*combinedData, 0, len(res))
+	for _, d := range res {
+		combinedData = append(combinedData, d)
+	}
+
+	sort.Slice(combinedData, func(i, j int) bool { return combinedData[i].ratio > combinedData[j].ratio })
+
 	// Create a database connection
 	db, err := connect(args[1])
 	if err != nil {
@@ -92,15 +99,12 @@ func load(cmd *cobra.Command, args []string) error {
 	}
 
 	// Add data to table
-	for _, datum := range res {
-		year, err := time.Parse("2006", datum.year)
-		if err != nil {
-			if verboseErrors {
-				fmt.Printf("could not parse year: %v\n", err)
-			}
-			continue
+	for i, datum := range combinedData {
+		if i >= 1000 {
+			break
 		}
-		_, err = stmt.Exec(datum.id, datum.title, year, datum.rating, datum.budget, datum.revenue, datum.ratio, pq.Array(datum.productionCompanies), datum.url, datum.abstract)
+
+		_, err = stmt.Exec(datum.id, datum.title, datum.year, datum.rating, datum.budget, datum.revenue, datum.ratio, pq.Array(datum.productionCompanies), datum.url, datum.abstract)
 		if err != nil {
 			if verboseErrors {
 				fmt.Printf("error adding row to table: %v\n", err)

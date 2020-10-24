@@ -112,7 +112,9 @@ func combine(cmd *cobra.Command, args []string) error {
 
 	for id, info := range moviesMetadata {
 		if match, ok := wikiMatches[id]; ok {
-			writer.Write([]string{id, info.title, match.url, match.abstract, match.score, info.budget, info.year, info.revenue, moviesRatios.forID(id), ratings.forID(id), info.production})
+			writer.Write([]string{id, info.title, match.url, match.abstract,
+				fmt.Sprintf("%f", match.score), fmt.Sprintf("%d", info.budget), info.year.Format("2006-01-02"), fmt.Sprintf("%d", info.revenue),
+				moviesRatios.forID(id), ratings.forID(id), info.production})
 		}
 	}
 

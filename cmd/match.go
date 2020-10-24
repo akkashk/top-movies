@@ -138,7 +138,11 @@ func match(cmd *cobra.Command, args []string) error {
 				abstract: entry.abstract,
 			}
 
-			fmt.Printf("%d films matched\n", len(results))
+			// Output progress for information
+			if len(results)%1000 == 0 {
+				fmt.Printf("%d films matched\n", len(results))
+			}
+
 		}
 	}
 

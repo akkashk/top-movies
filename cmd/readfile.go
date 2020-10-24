@@ -8,6 +8,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // parseRowFn specifies how a row of data should be parsed for a given CSV file.
@@ -96,13 +97,26 @@ func readMoviesMetadata(res moviesMetadata) parseRowFn {
 			case "production_companies":
 				val.production = strings.Join(decodeJSON(columnValue), ", ")
 			case "revenue":
-				val.revenue = columnValue
-			case "budget":
-				val.budget = columnValue
-			case "release_date":
-				if len(columnValue) >= 4 {
-					val.year = columnValue[:4]
+				revenue, err := getInt(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an int for revenue", columnValue)
+					return
 				}
+				val.revenue = revenue
+			case "budget":
+				budget, err := getInt(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an int for budget", columnValue)
+					return
+				}
+				val.budget = budget
+			case "release_date":
+				year, err := getTime(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a date for year", columnValue)
+					return
+				}
+				val.year = year
 			}
 		}
 
@@ -111,6 +125,19 @@ func readMoviesMetadata(res moviesMetadata) parseRowFn {
 		}
 
 	}
+}
+
+func getInt(s string) (int, error) {
+	return strconv.Atoi(s)
+}
+
+func getFloat(s string) (float32, error) {
+	f, err := strconv.ParseFloat(s, 32)
+	return float32(f), err
+}
+
+func getTime(s string) (time.Time, error) {
+	return time.Parse("2006-01-02", s)
 }
 
 type moviesMetadata map[string]*movieMetadata
@@ -128,10 +155,10 @@ func (m moviesMetadata) features() moviesMetadataFeatures {
 type movieMetadata struct {
 	title         string
 	originalTitle string
-	year          string
 	production    string
-	budget        string
-	revenue       string
+	year          time.Time
+	budget        int
+	revenue       int
 }
 
 func (m *movieMetadata) feature() *movieMetadataFeatures {
@@ -140,8 +167,8 @@ func (m *movieMetadata) feature() *movieMetadataFeatures {
 		p := strings.ToLower(m.production)
 		tokens = append(tokens, strings.Split(p, ", ")...)
 	}
-	if m.year != "" {
-		tokens = append(tokens, m.year)
+	if !m.year.IsZero() {
+		tokens = append(tokens, fmt.Sprintf("%d", m.year.Year()))
 	}
 
 	return &movieMetadataFeatures{
@@ -258,7 +285,7 @@ type movieCreditsFeatures []string
 func readMoviesRating(res ratings) parseRowFn {
 	return func(row []string, indices map[string]int, stats *outputStats) {
 		var id string
-		var rating float64
+		var rating float32
 		var userID string
 		var err error
 
@@ -276,7 +303,7 @@ func readMoviesRating(res ratings) parseRowFn {
 			case "userId":
 				userID = columnValue
 			case "rating":
-				rating, err = strconv.ParseFloat(columnValue, 32)
+				rating, err = getFloat(columnValue)
 				if err != nil {
 					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a float for ratings", columnValue)
 					return
@@ -312,8 +339,8 @@ func readMoviesRating(res ratings) parseRowFn {
 }
 
 type ratingInfo struct {
-	cumulativeRating float64
-	numberOfRatings  float64
+	cumulativeRating float32
+	numberOfRatings  int
 	seenUsers        map[string]bool
 }
 
@@ -324,14 +351,14 @@ func (r ratings) forID(id string) string {
 	if !exists {
 		return "NaN"
 	}
-	return fmt.Sprintf("%f", val.cumulativeRating/val.numberOfRatings)
+	return fmt.Sprintf("%f", val.cumulativeRating/float32(val.numberOfRatings))
 }
 
 // readMoviesRatio specifies how to read a row of data from a file containing budget to revenue ratio
 func readMoviesRatio(res moviesRatios) parseRowFn {
 	return func(row []string, indices map[string]int, stats *outputStats) {
 		var id string
-		var ratio float64
+		var ratio float32
 		var err error
 
 		for columnName, idx := range indices {
@@ -346,7 +373,7 @@ func readMoviesRatio(res moviesRatios) parseRowFn {
 			case "id":
 				id = columnValue
 			case "ratio":
-				ratio, err = strconv.ParseFloat(columnValue, 32)
+				ratio, err = getFloat(columnValue)
 				if err != nil {
 					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a float for ratio", columnValue)
 					return
@@ -355,12 +382,12 @@ func readMoviesRatio(res moviesRatios) parseRowFn {
 		}
 
 		if id != "" {
-			res[id] = ratio
+			res[id] = float32(ratio)
 		}
 	}
 }
 
-type moviesRatios map[string]float64
+type moviesRatios map[string]float32
 
 func (m moviesRatios) forID(id string) string {
 	ratio, ok := m[id]
@@ -389,28 +416,33 @@ func readCombinedData(res map[string]*combinedData) parseRowFn {
 			case "title":
 				val.title = columnValue
 			case "year":
-				val.year = columnValue
+				year, err := getTime(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a year", columnValue)
+					return
+				}
+				val.year = year
 			case "budget":
-				budget, err := strconv.Atoi(columnValue)
+				budget, err := getInt(columnValue)
 				if err != nil {
 					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an integer for budget", columnValue)
 					return
 				}
 				val.budget = budget
 			case "revenue":
-				revenue, err := strconv.Atoi(columnValue)
+				revenue, err := getInt(columnValue)
 				if err != nil {
 					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an integer for revenue", columnValue)
 					return
 				}
 				val.revenue = revenue
 			case "ratio":
-				ratio, err := strconv.ParseFloat(columnValue, 32)
+				ratio, err := getFloat(columnValue)
 				if err != nil {
 					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a float for ratio", columnValue)
 					return
 				}
-				val.ratio = float32(ratio)
+				val.ratio = ratio
 			case "production_companies":
 				val.productionCompanies = strings.Split(columnValue, ", ")
 			case "url":
@@ -427,7 +459,7 @@ func readCombinedData(res map[string]*combinedData) parseRowFn {
 type combinedData struct {
 	id                  string
 	title               string
-	year                string
+	year                time.Time
 	rating              float32
 	budget              int
 	revenue             int
@@ -572,7 +604,12 @@ func readWikiMatches(res wikiMatches) parseRowFn {
 			case "abstract":
 				val.abstract = columnValue
 			case "score":
-				val.score = columnValue
+				score, err := getFloat(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be used as a float for score", columnValue)
+					return
+				}
+				val.score = score
 			}
 		}
 
@@ -587,7 +624,7 @@ type wikiMatches map[string]*wikiMatch
 type wikiMatch struct {
 	url      string
 	abstract string
-	score    string
+	score    float32
 }
 
 type outputStats struct {
