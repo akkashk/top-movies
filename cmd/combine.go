@@ -12,7 +12,7 @@ import (
 var (
 	combineCmd = &cobra.Command{
 		Use:   "combine <movies_metadata.csv> <ratio.csv> <wiki_matches.csv> <ratings.csv>",
-		Short: "Combine the tagged movied with metadata information",
+		Short: "Combine the movies metadata information with ratio calculations and Wikipedia links",
 		RunE:  combine,
 		Args:  cobra.ExactArgs(4),
 	}

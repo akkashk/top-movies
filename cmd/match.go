@@ -168,9 +168,10 @@ func match(cmd *cobra.Command, args []string) error {
 
 // matching provides the specification for features to match against a wikipedia entry
 type matching interface {
-	// mostRevelant returns a list of most relevant ids
+	// mostRevelant returns a list of most relevant ids in the channel given a wikipedia entry.
+	// WaitGroup.Done() must be called when no further ids are going to be sent.
 	mostRelevant(*wikiEntry, chan<- string, *sync.WaitGroup)
-	// revevance calculates a score between 0 and 1 given a wiki entry and an id
+	// relevance calculates a score between 0 and 1 given a wiki entry and an id
 	relevance(*wikiEntry, string) float64
 }
 

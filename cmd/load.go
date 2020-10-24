@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 
@@ -69,7 +70,19 @@ func load(cmd *cobra.Command, args []string) error {
 		combinedData = append(combinedData, d)
 	}
 
-	sort.Slice(combinedData, func(i, j int) bool { return combinedData[i].ratio > combinedData[j].ratio })
+	sort.Slice(combinedData, func(i, j int) bool {
+		// Return true if the value in index i is greater than value in index j
+		ratioI := float64(combinedData[i].ratio)
+		if math.IsNaN(ratioI) {
+			return false
+		}
+		ratioJ := float64(combinedData[j].ratio)
+		if math.IsNaN(ratioJ) {
+			return true
+		}
+
+		return ratioI > ratioJ
+	})
 
 	// Create a database connection
 	db, err := connect(args[1])

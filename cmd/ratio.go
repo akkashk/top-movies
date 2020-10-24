@@ -11,29 +11,16 @@ import (
 
 var (
 	ratioCmd = &cobra.Command{
-		Use:     "ratio <dataset.csv> [output path]",
+		Use:     "ratio <dataset.csv>",
 		Example: "ratio ~/Downloads/movies.csv",
 		Short:   "Calculate the ratio between two columns of a CSV dataset",
 		RunE:    ratio,
 		Args:    cobra.MinimumNArgs(1),
 	}
-
-	revenueColumn string
-	budgetColumn  string
 )
-
-func init() {
-	ratioCmd.Flags().StringVar(&revenueColumn, "columnA", "revenue", "the column name/index in input CSV file to use for the numerator in calculating the ratio")
-	ratioCmd.Flags().StringVar(&budgetColumn, "columnB", "budget", "the column name/index in the input CSV file to use for the denominator in calculating the ratio")
-}
 
 func ratio(cmd *cobra.Command, args []string) error {
 	movies := args[0]
-	output := "output_ratio.csv"
-	if len(args) > 1 {
-		output = args[1]
-	}
-
 	file, err := os.Open(movies)
 	if err != nil {
 		return fmt.Errorf("could not open file at %q: %v", movies, err)
@@ -46,13 +33,14 @@ func ratio(cmd *cobra.Command, args []string) error {
 	err = readCSV(
 		fin,
 		moviesMetadataStats,
-		[]string{"id", revenueColumn, budgetColumn},
+		[]string{"id", "revenue", "budget"},
 		readMoviesMetadata(moviesMetadata),
 	)
 	if err != nil {
 		return err
 	}
 
+	output := "output_ratio.csv"
 	fileOut, err := os.Create(output)
 	if err != nil {
 		return fmt.Errorf("error creating output file: %v", err)

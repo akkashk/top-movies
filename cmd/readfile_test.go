@@ -190,6 +190,8 @@ func Test_decodeJSON(t *testing.T) {
 }
 
 func Test_moviesMetadata(t *testing.T) {
+	year, err := getTime("2020-01-20")
+	require.NoError(t, err)
 	tests := []struct {
 		name string
 		in   *movieMetadata
@@ -200,7 +202,7 @@ func Test_moviesMetadata(t *testing.T) {
 			in: &movieMetadata{
 				title:         "Film Title",
 				originalTitle: "Film Title",
-				year:          "2020",
+				year:          year,
 				production:    "Bar Studios, FooBar Productions",
 			},
 			out: &movieMetadataFeatures{
@@ -227,7 +229,7 @@ func Test_moviesMetadata(t *testing.T) {
 			in: &movieMetadata{
 				title:         "film title",
 				originalTitle: "film title",
-				year:          "2020",
+				year:          year,
 			},
 			out: &movieMetadataFeatures{
 				title:         "film title",
@@ -238,7 +240,7 @@ func Test_moviesMetadata(t *testing.T) {
 		{
 			name: "empty title",
 			in: &movieMetadata{
-				year:       "2020",
+				year:       year,
 				production: "bar studios, foobar productions",
 			},
 			out: &movieMetadataFeatures{
@@ -260,7 +262,7 @@ func Test_moviesMetadata(t *testing.T) {
 func Test_moviesMetadataParseFn(t *testing.T) {
 	metadataRes := make(moviesMetadata)
 	parseFn := readMoviesMetadata(metadataRes)
-	row := []string{"0", "2020", "film foo", `{"name": "bar productions"}`, "extra"}
+	row := []string{"0", "2020-10-10", "film foo", `{"name": "bar productions"}`, "extra"}
 	indices := map[string]int{
 		"id":                   0,
 		"release_date":         1,
@@ -272,13 +274,13 @@ func Test_moviesMetadataParseFn(t *testing.T) {
 
 	require.Len(t, metadataRes, 1)
 	require.Contains(t, metadataRes, "0")
-	require.Equal(t, "2020", metadataRes["0"].year)
+	require.Equal(t, 2020, metadataRes["0"].year.Year())
 	require.Equal(t, "bar productions", metadataRes["0"].production)
 	require.Equal(t, "film foo", metadataRes["0"].title)
 	require.Empty(t, stats.rowErrors)
 
 	// row contains less than required entries
-	row = []string{"1", "2020", "film foo"}
+	row = []string{"1", "2020-10-10", "film foo"}
 	parseFn(row, indices, stats)
 
 	// Check that we did not add any new entry
@@ -287,13 +289,13 @@ func Test_moviesMetadataParseFn(t *testing.T) {
 	require.Contains(t, stats.rowErrors[0].Error(), "row has 3 columns when at least 4 is expected")
 
 	// Add another valid row but with invalid json for production companies
-	row = []string{"2", "2020", "film bar", "foo productions"}
+	row = []string{"2", "2020-10-10", "film bar", "foo productions"}
 	parseFn(row, indices, stats)
 
 	// Check that we added another entry
 	require.Len(t, metadataRes, 2)
 	require.Contains(t, metadataRes, "2")
-	require.Equal(t, "2020", metadataRes["2"].year)
+	require.Equal(t, 2020, metadataRes["2"].year.Year())
 	require.Empty(t, metadataRes["2"].production)
 	require.Equal(t, "film bar", metadataRes["2"].title)
 	// Check no additional errors were generated
@@ -323,8 +325,8 @@ func Test_readMoviesRating(t *testing.T) {
 	}
 
 	require.Empty(t, stats.rowErrors)
-	require.Equal(t, 20.0, ratingsRes["0"].cumulativeRating)
-	require.Equal(t, 4.0, ratingsRes["0"].numberOfRatings)
+	require.EqualValues(t, 20.0, ratingsRes["0"].cumulativeRating)
+	require.EqualValues(t, 4.0, ratingsRes["0"].numberOfRatings)
 	require.Len(t, ratingsRes["0"].seenUsers, 4)
 	require.Equal(t, fmt.Sprintf("%f", 5.0), ratingsRes.forID("0"))
 
@@ -342,8 +344,8 @@ func Test_readMoviesRating(t *testing.T) {
 
 	// Each duplictate row should give an error
 	require.Len(t, stats.rowErrors, 3)
-	require.Equal(t, 6.0, ratingsRes["1"].cumulativeRating)
-	require.Equal(t, 1.0, ratingsRes["1"].numberOfRatings)
+	require.EqualValues(t, 6.0, ratingsRes["1"].cumulativeRating)
+	require.EqualValues(t, 1.0, ratingsRes["1"].numberOfRatings)
 	require.Len(t, ratingsRes["1"].seenUsers, 1)
 	require.Equal(t, fmt.Sprintf("%f", 6.0), ratingsRes.forID("1"))
 }
