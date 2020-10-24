@@ -322,7 +322,7 @@ type ratings map[string]*ratingInfo
 func (r ratings) forID(id string) string {
 	val, exists := r[id]
 	if !exists {
-		return "N/A"
+		return "NaN"
 	}
 	return fmt.Sprintf("%f", val.cumulativeRating/val.numberOfRatings)
 }
@@ -365,10 +365,76 @@ type moviesRatios map[string]float64
 func (m moviesRatios) forID(id string) string {
 	ratio, ok := m[id]
 	if !ok {
-		return "N/A"
+		return "NaN"
 	}
 
 	return fmt.Sprintf("%f", ratio)
+}
+
+// readCombinedData specifies how to read a row of data from a file containing all combined data
+func readCombinedData(res map[string]*combinedData) parseRowFn {
+	return func(row []string, indices map[string]int, stats *outputStats) {
+		val := new(combinedData)
+
+		for columnName, idx := range indices {
+			if idx >= len(row) {
+				stats.rowErrors[stats.totalRows] = fmt.Errorf("row has %d columns when at least %d is expected", len(row), idx+1)
+				return
+			}
+
+			columnValue := row[idx]
+			switch columnName {
+			case "id":
+				val.id = columnValue
+			case "title":
+				val.title = columnValue
+			case "year":
+				val.year = columnValue
+			case "budget":
+				budget, err := strconv.Atoi(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an integer for budget", columnValue)
+					return
+				}
+				val.budget = budget
+			case "revenue":
+				revenue, err := strconv.Atoi(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to an integer for revenue", columnValue)
+					return
+				}
+				val.revenue = revenue
+			case "ratio":
+				ratio, err := strconv.ParseFloat(columnValue, 32)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a float for ratio", columnValue)
+					return
+				}
+				val.ratio = float32(ratio)
+			case "production_companies":
+				val.productionCompanies = strings.Split(columnValue, ", ")
+			case "url":
+				val.url = columnValue
+			case "abstract":
+				val.abstract = columnValue
+			}
+		}
+
+		res[val.id] = val
+	}
+}
+
+type combinedData struct {
+	id                  string
+	title               string
+	year                string
+	rating              float32
+	budget              int
+	revenue             int
+	ratio               float32
+	productionCompanies []string
+	url                 string
+	abstract            string
 }
 
 const (

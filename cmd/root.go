@@ -19,8 +19,9 @@ func init() {
 	rootCmd.AddCommand(ratioCmd)
 	rootCmd.AddCommand(matchCmd)
 	rootCmd.AddCommand(combineCmd)
+	rootCmd.AddCommand(loadCmd)
 
-	rootCmd.Flags().BoolVarP(&verboseErrors, "verbose", "v", false, "output verbose errors")
+	rootCmd.PersistentFlags().BoolVarP(&verboseErrors, "verbose", "v", false, "output verbose errors")
 }
 
 func Execute() {

@@ -106,7 +106,7 @@ func combine(cmd *cobra.Command, args []string) error {
 	defer fout.Close()
 
 	writer := csv.NewWriter(fout)
-	if err := writer.Write([]string{"id", "title", "url", "abstract", "score", "budget", "year", "revenue", "ratio", "rating", "production company"}); err != nil {
+	if err := writer.Write([]string{"id", "title", "url", "abstract", "score", "budget", "year", "revenue", "ratio", "rating", "production_companies"}); err != nil {
 		return err
 	}
 
