@@ -314,10 +314,10 @@ func Test_readMoviesRating(t *testing.T) {
 
 	// Unique users
 	rows := [][]string{
-		{"0", "U1", "5"},
-		{"0", "U2", "5"},
-		{"0", "U3", "5"},
-		{"0", "U4", "5"},
+		{"0", "U1", "5.5"},
+		{"0", "U2", "5.2"},
+		{"0", "U3", "5.8"},
+		{"0", "U4", "5.5"},
 	}
 	for _, row := range rows {
 		parseFn(row, indices, stats)
@@ -325,17 +325,17 @@ func Test_readMoviesRating(t *testing.T) {
 	}
 
 	require.Empty(t, stats.rowErrors)
-	require.EqualValues(t, 20.0, ratingsRes["0"].cumulativeRating)
-	require.EqualValues(t, 4.0, ratingsRes["0"].numberOfRatings)
+	require.EqualValues(t, 22.0, ratingsRes["0"].cumulativeRating)
+	require.EqualValues(t, 4, ratingsRes["0"].numberOfRatings)
 	require.Len(t, ratingsRes["0"].seenUsers, 4)
-	require.Equal(t, fmt.Sprintf("%f", 5.0), ratingsRes.forID("0"))
+	require.Equal(t, fmt.Sprintf("%f", 5.5), ratingsRes.forID("0"))
 
 	// Repeated users
 	rows = [][]string{
 		{"1", "U1", "6"},
+		{"1", "U1", "7"},
 		{"1", "U1", "6"},
-		{"1", "U1", "6"},
-		{"1", "U1", "6"},
+		{"1", "U1", "3"},
 	}
 	for _, row := range rows {
 		parseFn(row, indices, stats)
@@ -345,7 +345,7 @@ func Test_readMoviesRating(t *testing.T) {
 	// Each duplictate row should give an error
 	require.Len(t, stats.rowErrors, 3)
 	require.EqualValues(t, 6.0, ratingsRes["1"].cumulativeRating)
-	require.EqualValues(t, 1.0, ratingsRes["1"].numberOfRatings)
+	require.EqualValues(t, 1, ratingsRes["1"].numberOfRatings)
 	require.Len(t, ratingsRes["1"].seenUsers, 1)
 	require.Equal(t, fmt.Sprintf("%f", 6.0), ratingsRes.forID("1"))
 }

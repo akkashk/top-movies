@@ -351,7 +351,8 @@ func (r ratings) forID(id string) string {
 	if !exists {
 		return "NaN"
 	}
-	return fmt.Sprintf("%f", val.cumulativeRating/float32(val.numberOfRatings))
+	avgRating := val.cumulativeRating / float32(val.numberOfRatings)
+	return fmt.Sprintf("%f", avgRating)
 }
 
 // readMoviesRatio specifies how to read a row of data from a file containing budget to revenue ratio
@@ -443,6 +444,13 @@ func readCombinedData(res map[string]*combinedData) parseRowFn {
 					return
 				}
 				val.ratio = ratio
+			case "rating":
+				rating, err := getFloat(columnValue)
+				if err != nil {
+					stats.rowErrors[stats.totalRows] = fmt.Errorf("column has value %q which cannot be converted to a float for ratings", columnValue)
+					return
+				}
+				val.rating = rating
 			case "production_companies":
 				val.productionCompanies = strings.Split(columnValue, ", ")
 			case "url":

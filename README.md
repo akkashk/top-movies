@@ -67,7 +67,7 @@ The command drops any existing tables with the name `topmovies` and creates a ne
 
 ## Miscellaneous
 
-A lot of the data from the IMDB dataset have incomplete/malformed input so the tool differentiates between parsing errors, which are collected and output by each command when run with the `-v` flag and do not cause the tool to exit early, versus fatal errors, such as failing to open a file, which causes the tool to immediately exit and output the error.
+A lot of the data from the IMDB dataset have incomplete/malformed input so the tool differentiates between parsing errors, which are collected and output by each command when run with the `-v` flag and do not cause the tool to exit early, versus fatal errors, such as failing to open a file, which causes the tool to exit immediately and output the error.
 
 `run.sh` is a helper script that runs all four commands given the location of the zipped IMDB dataset, location of the gzipped Wikipedia dataset and a Postgres connection URI (in that particular order). The script was checked against [ShellCheck](https://www.shellcheck.net/)
 
