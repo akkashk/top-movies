@@ -24,9 +24,9 @@ Run `go build` to build the binary `top-movies`
 
 The matched data is loaded to a Postgres database. See [the official website](https://www.postgresql.org/download/) to download and install. 
 
-The tool connects to Postgres via a [Connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING). It is recommended to use this tool
+The tool connects to Postgres via a [Connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
 
-It is recommended to use this tool with a standalone database as the tool drops and creates table with each run. The data can be queried from the Postgres database.
+It is recommended to use this tool with a standalone database as the tool drops and creates table with each run.
 
 # Data sources
 
@@ -63,7 +63,7 @@ The `load` command takes the combined dataset and loads it to a Postgres databas
 - Link to its Wikipedia page under `url TEXT`
 - Abstract of the film given by the Wikipedia dataset under `abstract TEXT`
 
-The command drops any existing tables with the name `topmovies` and creates a new one. This allows for any schema changes when the tool is updated.
+The command drops any existing tables with the name `topmovies` and creates a new one. This allows for any schema changes when the tool is updated. Data can be queried from this table using SQL commands.
 
 ## Miscellaneous
 
@@ -75,4 +75,4 @@ A lot of the data from the IMDB dataset have incomplete/malformed input so the t
 # Next steps
 - Add appropriate flags for all commands to pass different columns names. This would be useful when using the tool with a different version of the dataset.
 
-- Implement an API that would allow non-technical people to query the data. The API should allow users to sort films by various categories such as budget, revenue and release year
+- Currently the data needs to be queried directly from a Postgres table using SQL. Implementing an API would allow non-technical people to query and use the data. The API should allow users to sort films by various categories such as budget, revenue and release year.
