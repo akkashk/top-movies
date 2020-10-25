@@ -31,7 +31,7 @@ func match(cmd *cobra.Command, args []string) error {
 	defer wikiFile.Close()
 
 	wikiDecoder := xml.NewDecoder(wikiFile)
-	movieEntries := make(chan *wikiEntry, 10000)
+	movieEntries := make(chan *wikiEntry, 1000)
 
 	// Asynchronously read Wikipedia data
 	go func() {
@@ -85,12 +85,10 @@ func match(cmd *cobra.Command, args []string) error {
 	fmt.Print(moviesCreditsStats)
 
 	// Intialise features from movies datasets
-	fmt.Println("Initialising features")
 	features := []matching{
 		moviesMetadata.features(),
 		moviesCredits.features(),
 	}
-	fmt.Println("Initialised features")
 
 	results := map[string]*matchResult{}
 	for entry := range movieEntries {

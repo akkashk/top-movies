@@ -6,11 +6,7 @@
 
 ## **Go**
 
-Install Go to build this tool from source depending on your platform. This tool has been built using Go 1.15.
-
-### Testing
-
-The different commands have accompanying unit tests which can be run by `cd cmd/; go test -run ''`
+[Install Go](https://golang.org/dl/) to build this tool from source for your platform. This tool has been built using Go 1.15.
 
 ### Dependencies when building from source
 
@@ -20,19 +16,21 @@ The different commands have accompanying unit tests which can be run by `cd cmd/
 
 Run `go build` to build the binary `top-movies`
 
+### Testing
+
+The different commands have accompanying unit tests which can be run by `cd cmd/; go test -run ''`
+
 ## **Postgres**
 
-The matched data is loaded to a Postgres database. See [the official website](https://www.postgresql.org/download/) to download and install. 
+The matched data is loaded to a Postgres database. See [the official website](https://www.postgresql.org/download/) on how to download and install. 
 
-The tool connects to Postgres via a [Connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
+The tool connects to Postgres by specifying a [Connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
 
-It is recommended to use this tool with a standalone database as the tool drops and creates table with each run.
+It is recommended to use this tool with a standalone database as the tool drops and creates tables with each run.
 
 # Data sources
 
-The IMDB dataset version 7 can be downloaded from [here](https://www.kaggle.com/rounakbanik/the-movies-dataset/version/7)
-
-The tool has been designed to work with version 7, in particular it expects columns with certain predefined names.
+The IMDB dataset version 7 can be downloaded from [here](https://www.kaggle.com/rounakbanik/the-movies-dataset/version/7). The tool has been designed to work with version 7, in particular it expects columns with certain predefined names.
 
 The Wikipedia dataset can be downloaded from [here](https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-abstract.xml.gz)
 
@@ -42,14 +40,16 @@ The Wikipedia dataset can be downloaded from [here](https://dumps.wikimedia.org/
 The `ratio` command calculates the ratio between two columns and outputs results to a new CSV file.
 
 ## **match**
-The `match` command movies in the IMDB dataset with its corresponding Wikipedia page and outputs results to a new CSV file. 
+The `match` command links the movies in the IMDB dataset with its corresponding Wikipedia page (if it finds one) and outputs the results to a new CSV file. 
 
-This uses Go's builtin concurrency model of goroutines and channels to asynchronously read entries from the Wikipedia dataset whilst matching them with movies from the IMDB dataset.
+This command uses Go's builtin concurrency model of goroutines and channels to asynchronously read entries from the Wikipedia dataset whilst matching them with movies from the IMDB dataset.
 
-Currently the tool uses movie metadata information and movie credits information to match a movie with its Wikipedia page. Additional features can be added by implementing the `matching` interface and adding the new feature to `features` variable in `match.go`.
+Movies are matched to their Wikipedia article by populating a trie with movies titles from the IMDB dataset and doing a prefix search using the title of a Wikipedia article as the key. If multiple matches are found then a score is calculated based on the movie title, Wikipedia title, presence of various keywords in the abstract such as release date, cast members and production crew. The movie with the highest score is taken as the best match for a given Wikipedia article.
+
+Currently the tool only uses movie metadata information and movie credits information. Additional information can be added to the algorithm by implementing the `matching` interface and adding the new features to `features` variable in `match.go`.
 
 ## **combine**
-The `combine` command combines the movies metadata information with ratio calculations, Wikipedia links/abstract and outputs results to a new CSV file.
+The `combine` command combines the movies metadata information with ratio calculations, Wikipedia links/abstract and outputs the results to a new CSV file.
 
 ## **load**
 The `load` command takes the combined dataset and loads it to a Postgres database. This loads the data under the table name `topmovies` containing the following information along with its column name and datatype:
@@ -67,9 +67,9 @@ The command drops any existing tables with the name `topmovies` and creates a ne
 
 ## Miscellaneous
 
-A lot of the data from the IMDB dataset have incomplete/malformed input so the tool differentiates between parsing errors, which are collected and output by each command when run with the `-v` flag and do not cause the tool to exit early, versus fatal errors, such as failing to open a file, which causes the tool to exit immediately and output the error.
+There are a lot of incomplete/malformed inputs in the IMDB dataset. The tool considers them as "parsing errors" which are collected and output by each command. Additional information about such errors can be output when running the tool with the `-v` flag. Parsing errors do not cause the tool to exit early.
 
-`run.sh` is a helper script that runs all four commands given the location of the zipped IMDB dataset, location of the gzipped Wikipedia dataset and a Postgres connection URI (in that particular order). The script was checked against [ShellCheck](https://www.shellcheck.net/)
+`run.sh` is a helper script that runs all four commands given the location of the zipped IMDB dataset, location of the gzipped Wikipedia dataset and a Postgres connection URI (in this exact order). The script was checked against [ShellCheck](https://www.shellcheck.net/). You must build the tool using `go build` before running this script.
 
 
 # Next steps

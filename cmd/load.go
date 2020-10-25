@@ -16,7 +16,7 @@ import (
 
 var (
 	loadCmd = &cobra.Command{
-		Use:   "load <combined.csv> <connection_url>",
+		Use:   "load <combined.csv> <connection_uri>",
 		Short: "Loads the data to a Postgres database",
 		RunE:  load,
 		Args:  cobra.MinimumNArgs(2),
@@ -153,6 +153,6 @@ func connect(url string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	fmt.Println("Successfully connected!")
+	fmt.Println("Successfully connected to Postgres!")
 	return db, nil
 }
