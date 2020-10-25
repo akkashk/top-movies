@@ -1,28 +1,25 @@
 package cmd
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func Test_matching(t *testing.T) {
-	mdFeatures := make(moviesMetadataFeatures)
-	mdFeatures["0"] = &movieMetadataFeatures{
+	mdFeatures := &moviesMetadataFeatures{
+		data: map[string]*movieMetadataFeatures{},
+		trie: newTrie(),
+	}
+	mdFeatures.data["0"] = &movieMetadataFeatures{
 		title: "film title",
 	}
+	mdFeatures.trie.put([]rune("film title"), "0")
 
-	out := make(chan string, 1)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	mdFeatures.mostRelevant(
+	ids := mdFeatures.mostRelevant(
 		&wikiEntry{
 			title: "film title",
 		},
-		out,
-		&wg,
 	)
-	id := <-out
-	require.Equal(t, "0", id)
+	require.Contains(t, ids, "0")
 }

@@ -142,11 +142,19 @@ func getTime(s string) (time.Time, error) {
 
 type moviesMetadata map[string]*movieMetadata
 
-func (m moviesMetadata) features() moviesMetadataFeatures {
-	features := make(moviesMetadataFeatures, len(m))
+func (m moviesMetadata) features() *moviesMetadataFeatures {
+	features := &moviesMetadataFeatures{
+		data: map[string]*movieMetadataFeatures{},
+		trie: newTrie(),
+	}
 
 	for id, metadata := range m {
-		features[id] = metadata.feature()
+		features.data[id] = metadata.feature()
+
+		features.trie.put([]rune(normaliseString(metadata.title)), id)
+		if metadata.originalTitle != metadata.title {
+			features.trie.put([]rune(normaliseString(metadata.originalTitle)), id)
+		}
 	}
 
 	return features
@@ -181,7 +189,10 @@ func normaliseString(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
 }
 
-type moviesMetadataFeatures map[string]*movieMetadataFeatures
+type moviesMetadataFeatures struct {
+	data map[string]*movieMetadataFeatures
+	trie *trieNode
+}
 
 type movieMetadataFeatures struct {
 	title         string

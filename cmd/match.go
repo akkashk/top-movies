@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 
+	"github.com/dghubble/trie"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ func match(cmd *cobra.Command, args []string) error {
 	defer wikiFile.Close()
 
 	wikiDecoder := xml.NewDecoder(wikiFile)
-	movieEntries := make(chan *wikiEntry, 1000)
+	movieEntries := make(chan *wikiEntry, 10000)
 
 	// Asynchronously read Wikipedia data
 	go func() {
@@ -85,35 +85,30 @@ func match(cmd *cobra.Command, args []string) error {
 	fmt.Print(moviesCreditsStats)
 
 	// Intialise features from movies datasets
+	fmt.Println("Initialising features")
 	features := []matching{
 		moviesMetadata.features(),
 		moviesCredits.features(),
 	}
+	fmt.Println("Initialised features")
 
 	results := map[string]*matchResult{}
 	for entry := range movieEntries {
-		mostRelevantIDs := make(chan string, 100)
-		var wg sync.WaitGroup
+		mostRelevantIDs := []string{}
 
 		normalisedEntry := &wikiEntry{
 			title:    normaliseString(entry.title),
 			abstract: normaliseString(entry.abstract),
 		}
 
-		// Asynchronously load list of relevant movie IDs
+		// Load list of relevant movie IDs
 		for _, feature := range features {
-			go feature.mostRelevant(normalisedEntry, mostRelevantIDs, &wg)
-			wg.Add(1)
+			mostRelevantIDs = append(mostRelevantIDs, feature.mostRelevant(normalisedEntry)...)
 		}
-
-		go func() {
-			wg.Wait()
-			close(mostRelevantIDs)
-		}()
 
 		var maxScore float64
 		var bestID string
-		for id := range mostRelevantIDs {
+		for _, id := range mostRelevantIDs {
 			var score float64
 			for _, feature := range features {
 				score += feature.relevance(normalisedEntry, id)
@@ -170,31 +165,31 @@ func match(cmd *cobra.Command, args []string) error {
 type matching interface {
 	// mostRevelant returns a list of most relevant ids in the channel given a wikipedia entry.
 	// WaitGroup.Done() must be called when no further ids are going to be sent.
-	mostRelevant(*wikiEntry, chan<- string, *sync.WaitGroup)
+	mostRelevant(*wikiEntry) []string
 	// relevance calculates a score between 0 and 1 given a wiki entry and an id
 	relevance(*wikiEntry, string) float64
 }
 
-var _ matching = moviesMetadataFeatures(nil)
+var _ matching = (*moviesMetadataFeatures)(nil)
 
-func (m moviesMetadataFeatures) mostRelevant(e *wikiEntry, out chan<- string, wg *sync.WaitGroup) {
-	for id, md := range m {
-		if md.title != "" && strings.Contains(e.title, md.title) {
-			out <- id
-			continue
-		}
-
-		if md.originalTitle != "" && strings.Contains(e.title, md.originalTitle) {
-			out <- id
-			continue
-		}
-	}
-
-	wg.Done()
+func (m *moviesMetadataFeatures) mostRelevant(e *wikiEntry) []string {
+	title := []rune(e.title)
+	return m.trie.walk(title)
 }
 
-func (m moviesMetadataFeatures) relevance(e *wikiEntry, id string) float64 {
-	md, ok := m[id]
+func walkTrie(out chan<- string) trie.WalkFunc {
+	return func(key string, value interface{}) error {
+		if ids, ok := value.([]string); ok {
+			for _, id := range ids {
+				out <- id
+			}
+		}
+		return nil
+	}
+}
+
+func (m *moviesMetadataFeatures) relevance(e *wikiEntry, id string) float64 {
+	md, ok := m.data[id]
 	if !ok {
 		return 0
 	}
@@ -224,8 +219,8 @@ func (m moviesMetadataFeatures) relevance(e *wikiEntry, id string) float64 {
 
 var _ matching = moviesCreditsFeatures(nil)
 
-func (m moviesCreditsFeatures) mostRelevant(e *wikiEntry, out chan<- string, wg *sync.WaitGroup) {
-	wg.Done()
+func (m moviesCreditsFeatures) mostRelevant(e *wikiEntry) []string {
+	return nil
 }
 
 func (m moviesCreditsFeatures) relevance(e *wikiEntry, id string) float64 {
