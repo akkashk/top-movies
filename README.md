@@ -6,7 +6,7 @@
 
 ## **Go**
 
-Install Go to build this tool from source, otherwise use the pre-built binary `top-movies` to run the various commands
+Install Go to build this tool from source depending on your platform. This tool has been built using Go 1.15.
 
 ### Testing
 
@@ -39,17 +39,17 @@ The Wikipedia dataset can be downloaded from [here](https://dumps.wikimedia.org/
 # Commands
 
 ## **ratio**
-The `ratio` command calculates the ratio between two columns.
+The `ratio` command calculates the ratio between two columns and outputs results to a new CSV file.
 
 ## **match**
-The `match` command movies in the IMDB dataset with its corresponding Wikipedia page. 
+The `match` command movies in the IMDB dataset with its corresponding Wikipedia page and outputs results to a new CSV file. 
 
 This uses Go's builtin concurrency model of goroutines and channels to asynchronously read entries from the Wikipedia dataset whilst matching them with movies from the IMDB dataset.
 
 Currently the tool uses movie metadata information and movie credits information to match a movie with its Wikipedia page. Additional features can be added by implementing the `matching` interface and adding the new feature to `features` variable in `match.go`.
 
 ## **combine**
-The `combine` command combines the movies metadata information with ratio calculations and Wikipedia links and abstract.
+The `combine` command combines the movies metadata information with ratio calculations, Wikipedia links/abstract and outputs results to a new CSV file.
 
 ## **load**
 The `load` command takes the combined dataset and loads it to a Postgres database. This loads the data under the table name `topmovies` containing the following information along with its column name and datatype:

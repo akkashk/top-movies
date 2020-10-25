@@ -95,7 +95,7 @@ func readMoviesMetadata(res moviesMetadata) parseRowFn {
 			case "original_title":
 				val.originalTitle = columnValue
 			case "production_companies":
-				val.production = strings.Join(decodeJSON(columnValue), ", ")
+				val.production = decodeJSON(columnValue)
 			case "revenue":
 				revenue, err := getInt(columnValue)
 				if err != nil {
@@ -155,7 +155,7 @@ func (m moviesMetadata) features() moviesMetadataFeatures {
 type movieMetadata struct {
 	title         string
 	originalTitle string
-	production    string
+	production    []string
 	year          time.Time
 	budget        int
 	revenue       int
@@ -163,19 +163,22 @@ type movieMetadata struct {
 
 func (m *movieMetadata) feature() *movieMetadataFeatures {
 	tokens := []string{}
-	if m.production != "" {
-		p := strings.ToLower(m.production)
-		tokens = append(tokens, strings.Split(p, ", ")...)
+	for _, company := range m.production {
+		tokens = append(tokens, normaliseString(company))
 	}
 	if !m.year.IsZero() {
 		tokens = append(tokens, fmt.Sprintf("%d", m.year.Year()))
 	}
 
 	return &movieMetadataFeatures{
-		title:         strings.ToLower(m.title),
-		originalTitle: strings.ToLower(m.originalTitle),
+		title:         normaliseString(m.title),
+		originalTitle: normaliseString(m.originalTitle),
 		tokens:        tokens,
 	}
+}
+
+func normaliseString(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
 }
 
 type moviesMetadataFeatures map[string]*movieMetadataFeatures
@@ -267,11 +270,11 @@ func (m *movieCredits) feature() movieCreditsFeatures {
 	features := make([]string, 0, len(m.cast)+len(m.crew))
 
 	for _, c := range m.cast {
-		features = append(features, strings.ToLower(c))
+		features = append(features, normaliseString(c))
 	}
 
 	for _, c := range m.crew {
-		features = append(features, strings.ToLower(c))
+		features = append(features, normaliseString(c))
 	}
 
 	return features
@@ -452,7 +455,7 @@ func readCombinedData(res map[string]*combinedData) parseRowFn {
 				}
 				val.rating = rating
 			case "production_companies":
-				val.productionCompanies = strings.Split(columnValue, ", ")
+				val.productionCompanies = strings.Split(columnValue, ";")
 			case "url":
 				val.url = columnValue
 			case "abstract":
@@ -529,7 +532,7 @@ func readWiki(wikiDecoder *xml.Decoder, movieEntries chan<- *wikiEntry) error {
 				if err := wikiDecoder.DecodeElement(&anchor, &t); err != nil {
 					return fmt.Errorf("could not decode element: %v", err)
 				}
-				entry.anchors = append(entry.anchors, strings.ToLower(anchor))
+				entry.anchors = append(entry.anchors, normaliseString(anchor))
 			}
 		}
 	}
@@ -553,7 +556,7 @@ func (w *wikiEntry) isMovie() bool {
 		return false
 	}
 
-	if strings.Contains(strings.ToLower(w.title), "film)") {
+	if strings.Contains(normaliseString(w.title), "film)") {
 		return true
 	}
 

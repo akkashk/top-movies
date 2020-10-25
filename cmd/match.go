@@ -96,8 +96,8 @@ func match(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
 
 		normalisedEntry := &wikiEntry{
-			title:    strings.ToLower(entry.title),
-			abstract: strings.ToLower(entry.abstract),
+			title:    normaliseString(entry.title),
+			abstract: normaliseString(entry.abstract),
 		}
 
 		// Asynchronously load list of relevant movie IDs
@@ -175,6 +175,8 @@ type matching interface {
 	relevance(*wikiEntry, string) float64
 }
 
+var _ matching = moviesMetadataFeatures(nil)
+
 func (m moviesMetadataFeatures) mostRelevant(e *wikiEntry, out chan<- string, wg *sync.WaitGroup) {
 	for id, md := range m {
 		if md.title != "" && strings.Contains(e.title, md.title) {
@@ -219,6 +221,8 @@ func (m moviesMetadataFeatures) relevance(e *wikiEntry, id string) float64 {
 
 	return score
 }
+
+var _ matching = moviesCreditsFeatures(nil)
 
 func (m moviesCreditsFeatures) mostRelevant(e *wikiEntry, out chan<- string, wg *sync.WaitGroup) {
 	wg.Done()

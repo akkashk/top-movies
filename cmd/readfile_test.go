@@ -203,7 +203,7 @@ func Test_moviesMetadata(t *testing.T) {
 				title:         "Film Title",
 				originalTitle: "Film Title",
 				year:          year,
-				production:    "Bar Studios, FooBar Productions",
+				production:    []string{"Bar Studios", "FooBar Productions"},
 			},
 			out: &movieMetadataFeatures{
 				title:         "film title",
@@ -216,7 +216,7 @@ func Test_moviesMetadata(t *testing.T) {
 			in: &movieMetadata{
 				title:         "film title",
 				originalTitle: "film title",
-				production:    "bar studios, foobar productions",
+				production:    []string{"bar studios", "foobar productions"},
 			},
 			out: &movieMetadataFeatures{
 				title:         "film title",
@@ -241,7 +241,7 @@ func Test_moviesMetadata(t *testing.T) {
 			name: "empty title",
 			in: &movieMetadata{
 				year:       year,
-				production: "bar studios, foobar productions",
+				production: []string{"bar studios", "foobar productions"},
 			},
 			out: &movieMetadataFeatures{
 				tokens: []string{"bar studios", "foobar productions", "2020"},
@@ -275,7 +275,7 @@ func Test_moviesMetadataParseFn(t *testing.T) {
 	require.Len(t, metadataRes, 1)
 	require.Contains(t, metadataRes, "0")
 	require.Equal(t, 2020, metadataRes["0"].year.Year())
-	require.Equal(t, "bar productions", metadataRes["0"].production)
+	require.Contains(t, metadataRes["0"].production, "bar productions")
 	require.Equal(t, "film foo", metadataRes["0"].title)
 	require.Empty(t, stats.rowErrors)
 

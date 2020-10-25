@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -116,7 +117,7 @@ func combine(cmd *cobra.Command, args []string) error {
 		if match, ok := wikiMatches[id]; ok {
 			writer.Write([]string{id, info.title, match.url, match.abstract,
 				fmt.Sprintf("%f", match.score), fmt.Sprintf("%d", info.budget), info.year.Format("2006-01-02"), fmt.Sprintf("%d", info.revenue),
-				moviesRatios.forID(id), ratings.forID(id), info.production})
+				moviesRatios.forID(id), ratings.forID(id), strings.Join(info.production, ";")})
 		}
 	}
 
